@@ -1,0 +1,35 @@
+name: JioMart Daily Shipment Report
+
+on:
+  schedule:
+    - cron: '30 4 * * *'   # 4:30 AM UTC = 10:00 AM IST (Mon–Sun)
+  workflow_dispatch:         # allows manual trigger from GitHub UI
+
+jobs:
+  download-report:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Playwright + dependencies
+        run: |
+          pip install playwright
+          playwright install chromium
+          playwright install-deps chromium
+
+      - name: Run JioMart report downloader
+        env:
+          JIOMART_USER_ID:    ${{ secrets.JIOMART_USER_ID }}
+          JIOMART_PASSWORD:   ${{ secrets.JIOMART_PASSWORD }}
+          MS_CLIENT_ID:       ${{ secrets.MS_CLIENT_ID }}
+          MS_TENANT_ID:       ${{ secrets.MS_TENANT_ID }}
+          MS_CLIENT_SECRET:   ${{ secrets.MS_CLIENT_SECRET }}
+          MS_REFRESH_TOKEN:   ${{ secrets.MS_REFRESH_TOKEN }}
+        run: python jiomart_shipment_report.py
