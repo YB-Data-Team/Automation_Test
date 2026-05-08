@@ -2,8 +2,8 @@ name: JioMart Daily Shipment Report
 
 on:
   schedule:
-    - cron: '30 4 * * *'   # 4:30 AM UTC = 10:00 AM IST (Mon–Sun)
-  workflow_dispatch:         # allows manual trigger from GitHub UI
+    - cron: '30 4 * * *'   # 4:30 AM UTC = 10:00 AM IST
+  workflow_dispatch:         # manual trigger from GitHub UI
 
 jobs:
   download-report:
@@ -18,9 +18,14 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Install Playwright + dependencies
+      - name: Install system dependencies (Tesseract OCR)
         run: |
-          pip install playwright
+          sudo apt-get update -qq
+          sudo apt-get install -y tesseract-ocr
+
+      - name: Install Python dependencies
+        run: |
+          pip install playwright pytesseract Pillow
           playwright install chromium
           playwright install-deps chromium
 
