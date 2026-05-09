@@ -2,8 +2,8 @@ name: JioMart Daily Shipment Report
 
 on:
   schedule:
-    - cron: '30 4 * * *'   # 4:30 AM UTC = 10:00 AM IST
-  workflow_dispatch:         # manual trigger from GitHub UI
+    - cron: '30 4 * * *'
+  workflow_dispatch:
 
 jobs:
   download-report:
@@ -18,10 +18,10 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Install system dependencies (Tesseract OCR)
+      - name: Install system dependencies (Tesseract + Xvfb)
         run: |
           sudo apt-get update -qq
-          sudo apt-get install -y tesseract-ocr
+          sudo apt-get install -y tesseract-ocr xvfb
 
       - name: Install Python dependencies
         run: |
@@ -29,7 +29,7 @@ jobs:
           playwright install chromium
           playwright install-deps chromium
 
-      - name: Run JioMart report downloader
+      - name: Run JioMart report downloader (via Xvfb virtual display)
         env:
           JIOMART_USER_ID:    ${{ secrets.JIOMART_USER_ID }}
           JIOMART_PASSWORD:   ${{ secrets.JIOMART_PASSWORD }}
@@ -37,4 +37,12 @@ jobs:
           MS_TENANT_ID:       ${{ secrets.MS_TENANT_ID }}
           MS_CLIENT_SECRET:   ${{ secrets.MS_CLIENT_SECRET }}
           MS_REFRESH_TOKEN:   ${{ secrets.MS_REFRESH_TOKEN }}
-        run: python jiomart_shipment_report.py
+        run: xvfb-run -a python jiomart_shipment_report.py
+
+      - name: Upload debug screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: debug-screenshots
+          path: debug_screenshots/
+          retention-days: 3
